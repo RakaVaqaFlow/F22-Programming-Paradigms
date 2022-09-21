@@ -75,6 +75,10 @@
 
 ; Exercise 1.2, 1.6, 1.7
 
+; functions for 1.6 and 1.7
+
+; ----------------------------------------
+
 ; check whether a given expression is a exponentiation
 (define (exponentiation? expr)
   (cond
@@ -151,6 +155,31 @@
     [else (error "Expected a exponentiation expression of the form (<sin/cos/tan/log> <expr>), but got: " expr)]
     )
   )
+
+; check whether a given expression is a polyvariadic sum
+(define (polyvariadic-sum? expr)
+  (cond
+    [(and (list? expr) (> (length expr) 3) (equal? (first expr) '+)) #t]
+    [else #f]))
+
+; check whether a given expression is a polyvariadic product
+(define (polyvariadic-product? expr)
+  (cond
+    [(and (list? expr) (> (length expr) 3) (equal? (first expr) '*)) #t]
+    [else #f]))
+
+(define (transform-to-non-polyvariadic expr)
+  (define (helper expr)
+    (cond
+      [(sum? expr) expr]
+      [(product? expr) expr]
+      [(polyvariadic-sum? expr) (list '+ (second expr) (helper (cons '+ (rest (rest expr)))))]
+      [(polyvariadic-product? expr) (list '* (second expr) (helper (cons '* (rest (rest expr)))))]
+      [else expr])
+    )
+  (helper expr)
+  )
+; ----------------------------------------
 
 ; recursive function derivative that computes a symbolic
 ; derivative of a given expression with respect to a given variable
@@ -243,7 +272,12 @@
        
        ;(u*v)' = u'v + uv'
        (cons '+ (cons (cons '* (cons (derivate-mult (multiplier-1 expr) var) (cons (multiplier-2 expr) '()))) (cons (cons '* ( cons (multiplier-1 expr) (cons (derivate-mult (multiplier-2 expr) var) '()))) '())))] 
+
+      ; derivate polyvariadic-sum
+      [(polyvariadic-sum? expr) (helper (transform-to-non-polyvariadic expr) var)]
       
+      ; derivate polyvariadic-product
+      [(polyvariadic-product? expr) (helper (transform-to-non-polyvariadic expr) var)]
       [(number? expr) 0]
       [(equal? expr var) 1]
     )
@@ -431,6 +465,11 @@
       [(log? expr)
        (simplify-at-root (list 'log (helper (arg expr))))]
       
+      ; simplify polyvariadic-sum
+      [(polyvariadic-sum? expr) (helper (transform-to-non-polyvariadic expr))]
+      
+      ; simplify polyvariadic-product
+      [(polyvariadic-product? expr) (helper (transform-to-non-polyvariadic expr))]
       [else (error "Invalid expression: " expr)]
       ))
   (helper expr)
@@ -455,5 +494,16 @@
 (to-infix '(+ (+ x (+ x x)) (* (+ x y) 3))) ; '((x + (x + x)) + ((x + y) * 3)
 
 ; Exercise 1.8
+(define (variables-of expr) 
+  (remove-duplicates (sort (filter (lambda (e) (variable? e)) (flatten expr)) symbol<?)))
+(variables-of '(+ 1 x y (* x y z))) ; '(x y z)
 
 ; Exercise 1.9
+
+(define (gradient expr vars)
+  (map
+   (lambda (v) (simplify (derivative expr v)))
+   vars))
+
+(gradient '(+ 1 x y (* x y z)) '(x y z)) ; '((+ 1 (* y z)) (+ 1 (* x z)) (* x y))
+
