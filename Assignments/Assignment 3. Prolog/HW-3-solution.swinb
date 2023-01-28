@@ -1,0 +1,304 @@
+<div class="notebook">
+
+<div class="nb-cell markdown" name="md1">
+### Programming Paradigms Fall 2022 — Homework Assignment №3
+#### Name Surname: Vagif Khalilov
+#### Group: BS20-SD-01
+#### Email: v.khalilov@innopolis.university
+</div>
+
+<div class="nb-cell markdown" name="md2">
+### **1 Binary trees**
+</div>
+
+<div class="nb-cell markdown" name="md17">
+Consider the following representation of binary trees:
+
+• `empty` — an empty binary tree;
+
+• `node(Value, Left, Right)` — an node with a value **Value** and two subtrees (**Left** and **Right**).
+</div>
+
+<div class="nb-cell markdown" name="md3">
+#### **Exercise 1.1** (⋆, 3 points)
+Implement predicate ` tree/1` that checks whether a given term is a valid tree.
+</div>
+
+<div class="nb-cell program" data-background="true" name="p1">
+tree(empty).
+tree(node(_, Left, Right)):- tree(Left), tree(Right).
+</div>
+
+<div class="nb-cell query" name="q1">
+tree(empty)
+</div>
+
+<div class="nb-cell query" name="q2">
+tree(node(1, empty, node(2, node(3, empty, empty), empty)))
+</div>
+
+<div class="nb-cell query" name="q3">
+tree(node(A, empty, node(B, node(C, empty, empty), empty)))
+</div>
+
+<div class="nb-cell markdown" name="md4">
+#### **Exercise 1.2**  (⋆⋆, 6 points)
+Implement predicate ` containedTree/2` such that containedTree(Tree1, Tree2) is ` true` when **Tree1** is contained in **Tree2**:
+1. an empty tree is contained in any tree;
+2. a non-empty tree is contained in another non-empty tree when they have the same root and both subtrees are contained in the other subtrees respectively;
+</div>
+
+<div class="nb-cell program" data-background="true" name="p2">
+containedTree(empty, _).
+containedTree(node(Value, Left1, Right1), node(Value, Left2, Right2)):- 
+    containedTree(Left1, Left2), containedTree(Right1, Right2).
+</div>
+
+<div class="nb-cell query" name="q4">
+containedTree(Tree, node(3, node(1, empty, node(2, empty, empty)), node(4, empty, empty)))
+</div>
+
+<div class="nb-cell markdown" name="md5">
+#### **Exercise 1.3** (⋆, 3 points) 
+Implement predicate ` from/2` such that from(Start, List) is ` true` when **List** is a finite list consisting of consecutive numbers **Start**, **Start+1**, **Start+2**, ....
+</div>
+
+<div class="nb-cell program" data-background="true" name="p3">
+from(_, []).
+from(Start, [Start|T]):- Start1 is Start+1, from(Start1, T).
+</div>
+
+<div class="nb-cell query" name="q5">
+from(1, List)
+</div>
+
+<div class="nb-cell markdown" name="md6">
+#### **Exercise 1.4** (⋆⋆, 6 points) 
+Implement predicate ` preorder/2` such that preorder(Tree, List) is ` true` when **List** contains exactly of values from **Tree** in preorder traversal.
+</div>
+
+<div class="nb-cell program" data-background="true" name="p4">
+preorder(empty, []).
+preorder(node(Value, Left, Right), [Value|T]):- append(L_List, R_List, T), preorder(Left, L_List), preorder(Right, R_List).
+</div>
+
+<div class="nb-cell query" name="q6">
+preorder(node(1, node(2, node(3, empty, empty), empty), node(4, empty, empty)), [3,2,1,4])
+</div>
+
+<div class="nb-cell query" name="q7">
+preorder(node(1, node(2, node(3, empty, empty), empty), node(4, empty, empty)), Values)
+</div>
+
+<div class="nb-cell query" name="q8">
+preorder(Tree, [1,2,3])
+</div>
+
+<div class="nb-cell query" name="q9">
+from(1, _List), preorder(Tree, _List)
+</div>
+
+<div class="nb-cell markdown" name="md7">
+#### **Exercise 1.5** (⋆, 3 points) 
+Implement predicates ` leq/2` and ` less/2` extending built-in comparison predicates to work with positive and negative infinities:
+</div>
+
+<div class="nb-cell program" data-background="true" name="p5">
+leq(-infinity, _) :- !.
+leq(_, +infinity) :- !.
+leq(+infinity, _) :- !, fail.
+leq(_, -infinity) :- !, fail.
+leq(A, B) :- A =&lt; B.
+
+less(X, Y) :- leq(X, Y), X \= Y.
+</div>
+
+<div class="nb-cell query" name="q10">
+leq(-infinity, 4)
+</div>
+
+<div class="nb-cell query" name="q11">
+less(3, +infinity)
+</div>
+
+<div class="nb-cell query" name="q12">
+leq(4, 3)
+</div>
+
+<div class="nb-cell markdown" name="md8">
+#### **Exercise 1.6** (⋆⋆, 6 points) 
+Implement predicate ` bst/1` that checks that a tree is a binary search tree (BST).
+</div>
+
+<div class="nb-cell program" data-background="true" name="p6">
+lessAll(_, empty).
+lessAll(Num, node(Value, Left, Right)):- less(Value, Num), lessAll(Num, Left), lessAll(Num, Right).
+
+greaterAll(_, empty).
+greaterAll(Num, node(Value, Left, Right)):- leq(Num, Value), greaterAll(Num, Left), greaterAll(Num, Right).
+
+bst(empty).
+bst(node(_Value, empty, empty)).
+bst(node(Value, node(L_Value, L_Left, L_Right), empty)):- 
+    lessAll(Value, node(L_Value, L_Left, L_Right)), 
+    bst(node(L_Value, L_Left, L_Right)). 
+bst(node(Value, empty, node(R_Value, R_Left, R_Right))):- 
+    greaterAll(Value, node(R_Value, R_Left, R_Right)), 
+    bst(node(R_Value, R_Left, R_Right)). 
+bst(node(Value, node(L_Value, L_Left, L_Right), node(R_Value, R_Left, R_Right))):-
+    lessAll(Value, node(L_Value, L_Left, L_Right)),  
+    bst(node(L_Value, L_Left, L_Right)),
+    greaterAll(Value, node(R_Value, R_Left, R_Right)),
+    bst(node(R_Value, R_Left, R_Right)).
+</div>
+
+<div class="nb-cell query" name="q13">
+bst(node(3, node(1, empty, node(2, empty, empty)), node(4, empty, empty)))
+</div>
+
+<div class="nb-cell query" name="q14">
+bst(node(5, node(1, empty, node(2, empty, empty)), node(4, empty, empty)))
+</div>
+
+<div class="nb-cell query" name="q15">
+preorder(Tree, [3,1,2,4]), bst(Tree)
+</div>
+
+<div class="nb-cell query" name="q16">
+from(1, _List), preorder(Tree, _List), bst(Tree)
+</div>
+
+<div class="nb-cell markdown" name="md9">
+#### **Exercise 1.7** (⋆⋆, 6 points) 
+Implement predicate ` bstInsert/3` such that bstInsert(Value, Before, After) is `true` when **After** is a binary search tree produced from **Before** by inserting **Value** into it.
+</div>
+
+<div class="nb-cell program" data-background="true" name="p7">
+bstInsert(Value, empty, node(Value, empty, empty)) :- !.
+bstInsert(Value, node(Value1, Left, Right), node(Value1, A_Left, Right)) :-
+    less(Value, Value1), 
+    bstInsert(Value, Left, A_Left).
+bstInsert(Value, node(Value1, Left, Right), node(Value1, Left, A_Right)) :-
+    leq(Value1, Value), 
+    bstInsert(Value, Right, A_Right).
+</div>
+
+<div class="nb-cell query" name="q17">
+preorder(Before, [3]), bst(Before), bstInsert(1, Before, After)
+</div>
+
+<div class="nb-cell query" name="q18">
+preorder(Before, [4,1]), bst(Before), bstInsert(3, Before, After)
+</div>
+
+<div class="nb-cell markdown" name="md10">
+#### **Exercise 1.8** (⋆⋆, 6 points) 
+Implement predicate ` bstMin/2` such that bstMin(Tree, Min) is `true` when **Min** is the minimum value stored in **Tree**. Implement predicate ` bstMax/2` able to find the maximum value similarly.
+</div>
+
+<div class="nb-cell program" data-background="true" name="p8">
+bstMin(node(Min, empty, empty), Min).
+bstMin(node(_Value, Left, _Right), Min):- bstMin(Left, Min).
+
+bstMax(node(Max, empty, empty), Max).
+bstMax(node(_Value, _Left, Right), Min):- bstMax(Right, Min).
+</div>
+
+<div class="nb-cell query" name="q19">
+preorder(Tree, [4,2,1,3,6,5,7]), bst(Tree), bstMin(Tree, Min), bstMax(Tree, Max)
+</div>
+
+<div class="nb-cell markdown" name="md11">
+#### **Exercise 1.9** (⋆ ⋆ ⋆, +0.5% social credit) 
+Implement predicate ` bstDelete/3` such that bstDelete(Value, Before, After) is `true` when **After** is a binary search tree produced from **Before** by deleting **Value** from it. Note that this cannot be produced directly from ` bstInsert/3`, since that predicate can only insert/delete leaves, not internal nodes.
+</div>
+
+<div class="nb-cell program" data-background="true" name="p9">
+
+</div>
+
+<div class="nb-cell query" name="q20">
+preorder(Before, [3,1,2,4]), bst(Before), bstDelete(3, Before, After)
+</div>
+
+<div class="nb-cell query" name="q21">
+preorder(Before, [3,1,2,4]), bst(Before), bstDelete(1, Before, After)
+</div>
+
+<div class="nb-cell markdown" name="md12">
+### **2 Simple expressions**
+</div>
+
+<div class="nb-cell markdown" name="md13">
+#### **Exercise 2.1** (⋆, 3 points) 
+Implement predicate ` expr/1` that checks if a given term is a valid arithmetic expression:
+1. a number;
+2. a term X + Y where both X and Y are valid expressions;
+3. a term X ∗ Y where both X and Y are valid expressions;
+</div>
+
+<div class="nb-cell program" data-background="true" name="p10">
+expr(X) :- number(X).
+expr(X) :- var(X), !, fail.
+expr(X+Y) :- expr(X), expr(Y).
+expr(X*Y) :- expr(X), expr(Y).
+</div>
+
+<div class="nb-cell query" name="q22">
+expr(2+3*4)
+</div>
+
+<div class="nb-cell query" name="q23">
+expr((2+X)*4)
+</div>
+
+<div class="nb-cell markdown" name="md14">
+#### **Exercise 2.2** (⋆⋆, 6 points) 
+Implement predicate ` expr/2` such that expr(Expr, Values) is `true` when **Expr** is an expression term that uses each element (number) from **Values** once (in that order). You may assume that **Values** has known shape (i.e. length):
+</div>
+
+<div class="nb-cell program" data-background="true" name="p11">
+expr(Num, [Num]):- expr(Num).
+expr(X+Expr, [X|Values]):- expr(X), expr(Expr, Values).
+expr(X*Expr, [X|Values]):- expr(X), expr(Expr, Values).
+</div>
+
+<div class="nb-cell query" name="q24">
+expr(Expr, [1,2])
+</div>
+
+<div class="nb-cell query" name="q25">
+expr(Expr, [1,1,1,1])
+</div>
+
+<div class="nb-cell markdown" name="md15">
+#### **Exercise 2.3** (⋆, 3 points) 
+Implement predicate ` equation/2` such that equation(Values, Result=Expr) is ` true` when **Expr** is an expression term that uses each element (number) from **Values** once (in that order) and **Result** is the number equal to the computed value of **Expr**.
+</div>
+
+<div class="nb-cell program" data-background="true" name="p12">
+equation(Values, Result=Expr) :- expr(Expr, Values), Result is Expr.
+</div>
+
+<div class="nb-cell query" name="q26">
+equation([1,2], Equation)
+</div>
+
+<div class="nb-cell query" name="q27">
+equation([1,1,1], Equation)
+</div>
+
+<div class="nb-cell markdown" name="md16">
+#### **Exercise 2.4** (⋆⋆⋆, 9 points) 
+Implement predicate ` equations/2` such that equations(Values, Equations) is `true` when **Equations** is a list of all distinct equations that can be produced with **Values**.
+</div>
+
+<div class="nb-cell program" data-background="true" name="p13">
+
+</div>
+
+<div class="nb-cell query" name="q28">
+equations([1,2,3], Equations)
+</div>
+
+</div>
